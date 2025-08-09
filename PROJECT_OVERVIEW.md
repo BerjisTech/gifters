@@ -263,6 +263,46 @@ Operational Notes
 
 ----------------------------------------------------------------
 
+Data Entities Glossary
+- profiles: Core user profile with username, name, bio, image (CloudFront URL), email, follower/following counts, gifter level/badges.
+- posts: Text content and access control. Fields include access_type (free/subscription/paid), price (paid posts), product flags/fields when enabled.
+- post_media: Ordered media for posts; media_type photo|video, url points to CloudFront; order controls gallery order.
+- comments: Hierarchical comments for posts; includes author, content, timestamps.
+- post_reactions: Reactions (likes/emoji) keyed by user_id and post_id; supports counts in feed queries.
+- tags, post_tags: Hashtags and mapping to posts for explore/search and affinity.
+- search_queries: Logged searches with suggestion click/result click analytics for ranking/typeahead.
+- notifications: In-app notifications for gifts, wishlist events, withdrawals, messages, etc.; also used to trigger email.
+- follows: Follower graph edges; used for feed proximity and notifications.
+- post_views: View logs (id, post_id, user_id, view_duration) used for analytics and freshness penalties.
+- gifts: Catalog of virtual gifts with token prices and metadata (icon, category, popularity).
+- gift_sent: Gift transactions (gift, sender, recipient, tokens, reference) used in leaderboards and histories.
+- gifter_levels: Progression/levels based on gifts sent; displayed on profiles.
+- token_transactions: Ledger of token purchases, refunds, withdrawals, references to PSP transactions.
+- wishlists, wishlist_contributions: Wishlist items and contributions; ties to notifications and gifting UX.
+- withdrawals: User withdrawal requests (tokens, target currency, rates, payment_details, status, processed_by/at).
+- withdrawal_audit_log: Triggered audit trail for status changes on withdrawals.
+- live_streams, live_streams_with_stats: Live sessions metadata and denormalized views with viewer/comment counts.
+- conversations, messages: Direct chat structures; attachments stored in S3 and referenced via URLs.
+- moderation_post_media, moderation_chat_media: Queues/flags for moderated content.
+- recent_gifts (view): Convenience view for “My Gifters” lists on Android.
+
+Key RPCs (Database)
+- get_feed_posts(user_id?, limit, offset): Returns relevance-ranked feed posts with media and profile joins.
+- request_withdrawal(user_id, tokens, target_currency, exchange_rate, payment_method, payment_details): Creates a withdrawal and logs a token transaction.
+- increment_post_view_count(post_id): Increments a post’s view count; Angular also logs via `log-post-view` function.
+- search_explore(params): Unified search across posts/users/live; used by Android’s explore feature.
+
+Key Edge Functions (Supabase Functions)
+- upload-media: Issues S3 presigned PUT URL and returns public CloudFront URL.
+- send-gift, purchase-tokens: Secure gifting and token purchases; also create notifications.
+- subscribe-creator, purchase-post-access: Access control for subscriptions and paid posts.
+- send-notification-email: Email dispatch via SendGrid.
+- log-post-view: Records view with optional duration for analytics.
+- live-session (POST/GET/PATCH): Create/update/fetch live stream sessions.
+- admin-reject-withdrawal, admin-process-withdrawal: Admin workflows for payouts and rejections.
+
+----------------------------------------------------------------
+
 References (Code Pointers)
 - Angular
   - Media + CDN setup: `gifter-club/README.md`, `gifter-club/policies.md`, `gifter-club/supabas_to_aws_migration.md`
